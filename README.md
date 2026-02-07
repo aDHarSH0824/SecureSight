@@ -1,4 +1,4 @@
-# 🔐 Intelligent Video Survillence System
+# 🔐 SecureSight
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/Flask-3.1.0-green.svg)](https://flask.palletsprojects.com/)
@@ -45,7 +45,7 @@ A comprehensive AI-powered security monitoring system featuring real-time face r
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/yourusername/IVSS.git
+   git clone https://github.com/yourusername/SecureSight.git
    cd IVSS
    ```
 
@@ -235,8 +235,5 @@ Check application logs in:
 - `data/alerts/alerts_log.txt`
 - Console output for real-time debugging
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 
