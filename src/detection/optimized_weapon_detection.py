@@ -20,8 +20,14 @@ class ImprovedWeaponDetector:
             print(f"✅ Model loaded: {self.model_path}")
             return True
         except Exception as e:
-            print(f"❌ Error loading model: {e}")
-            return False
+            print(f"❌ Error loading model {self.model_path}: {e}. Trying fallback 'yolov8n.pt'...")
+            try:
+                self.model = YOLO("yolov8n.pt")
+                print("✅ Fallback model 'yolov8n.pt' loaded successfully")
+                return True
+            except Exception as ex:
+                print(f"❌ Failed to load fallback model: {ex}")
+                return False
     
     def detect_weapons_optimized(self, image_path, 
                                confidence=0.3,      # Lower threshold from analysis
@@ -217,6 +223,94 @@ class ImprovedWeaponDetector:
         print(f"✅ Detection sample saved: {output_path}")
         
         return detections
+
+def weapon_detection_process(shm_name, shape, output_queue, cam_id, lock):
+    """
+    Continuously reads frames from shared memory, runs optimized weapon detection,
+    and outputs alerts to the output_queue when a weapon is detected.
+    """
+    from multiprocessing import shared_memory
+    import os
+    
+    shm = shared_memory.SharedMemory(name=shm_name)
+    frame_buffer = np.ndarray(shape, dtype=np.uint8, buffer=shm.buf)
+    
+    # Initialize the weapon detector. It falls back to yolov8n.pt if best.pt is not found.
+    model_path = os.getenv("YOLO_MODEL_PATH", "../../data/models/best.pt")
+    detector = ImprovedWeaponDetector(model_path=model_path)
+    
+    print(f"[INFO] Weapon detection started for Camera {cam_id}...")
+    
+    while True:
+        time.sleep(0.05)  # Moderate delay to balance cpu usage
+        
+        with lock:
+            frame = np.copy(frame_buffer)
+            
+        if frame is None or frame.size == 0 or np.all(frame == 0):
+            continue
+            
+        # Convert color space from RGB to BGR for OpenCV
+        try:
+            frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        except Exception as e:
+            print(f"[ERROR] Weapon detection: Failed to convert color space: {e}")
+            continue
+            
+        # Save temp image for ImprovedWeaponDetector since it expects image path
+        os.makedirs("temp_frames", exist_ok=True)
+        temp_img_path = f"temp_frames/weapon_detect_cam{cam_id}.jpg"
+        cv2.imwrite(temp_img_path, frame_bgr)
+        
+        try:
+            # Run detection
+            detections = detector.detect_weapons_optimized(temp_img_path)
+            
+            if detections:
+                # Map weapon detection alerts to the general object alerts format
+                mapped_detections = []
+                for det in detections:
+                    # Weapon classes usually include knife, gun, handgun, rifle, sword, heavy-weapon
+                    mapped_detections.append({
+                        "label": det['class_name'],
+                        "confidence": det['confidence'],
+                        "bbox": [int(c) for c in det['bbox']]
+                    })
+                
+                # Push detection alert
+                output_queue.put({
+                    "cam_id": cam_id,
+                    "detections": mapped_detections,
+                    "severity": "critical",
+                    "detection_type": "weapon"
+                })
+                
+                # Save threat frame
+                threat_dir = os.path.join("data", "alerts", "weapon_alerts")
+                os.makedirs(threat_dir, exist_ok=True)
+                timestamp = time.strftime("%Y%m%d_%H%M%S")
+                filename = f"weapon_cam{cam_id}_{timestamp}.jpg"
+                save_path = os.path.join(threat_dir, filename)
+                
+                # Draw boxes for the local saved frame
+                for det in detections:
+                    x1, y1, x2, y2 = [int(c) for c in det['bbox']]
+                    cv2.rectangle(frame_bgr, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                    cv2.putText(frame_bgr, f"WEAPON: {det['class_name']} ({det['confidence']:.2f})", 
+                                (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                                
+                cv2.imwrite(save_path, frame_bgr)
+                print(f"[ALERT] Weapon detected on Camera {cam_id}! Snapshot saved to {save_path}")
+                
+        except Exception as e:
+            print(f"[ERROR] Weapon detection failed on Camera {cam_id}: {e}")
+            
+        finally:
+            if os.path.exists(temp_img_path):
+                try:
+                    os.remove(temp_img_path)
+                except OSError:
+                    pass
 
 def main():
     """Main function to demonstrate optimized weapon detection"""

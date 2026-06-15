@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from multiprocessing import shared_memory
 
-def video_capture_process(shm_name, shape, camera_source, cam_id):
+def video_capture_process(shm_name, shape, camera_source, cam_id, lock):
     # Determine the source: if it starts with "http" or contains ":" assume an IP stream.
     if isinstance(camera_source, str) and (camera_source.startswith("http") or ":" in camera_source):
         cap = cv2.VideoCapture(camera_source)
@@ -23,7 +23,8 @@ def video_capture_process(shm_name, shape, camera_source, cam_id):
                 print(f"[ERROR] Unable to read from camera source: {camera_source} (Camera {cam_id})")
                 break
             resized_frame = cv2.resize(frame, (shape[1], shape[0]))
-            frame_buffer[:] = resized_frame
+            with lock:
+                frame_buffer[:] = resized_frame
             # No GUI display in headless mode.
     finally:
         cap.release()

@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: securesight-db
+    restart: always
+    environment:
+      POSTGRES_USER: securesight_user
+      POSTGRES_PASSWORD: securesight_password
+      POSTGRES_DB: securesight_prod
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: securesight-web
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - SQLALCHEMY_DATABASE_URI=postgresql://securesight_user:securesight_password@db:5432/securesight_prod
+      - SQLALCHEMY_TRACK_MODIFICATIONS=False
+      - SECRET_KEY=securesight-production-secret-key
+      - UPLOAD_FOLDER=uploads
+      - ENABLE_EMAIL_NOTIFICATIONS=False
+      - YOLO_MODEL_PATH=data/models/yolov8n.pt
+      - FACE_ENCODINGS_PATH=config/encodings.pickle
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+
+volumes:
+  pgdata:

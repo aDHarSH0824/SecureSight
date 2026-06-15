@@ -75,10 +75,20 @@ A comprehensive AI-powered security monitoring system featuring real-time face r
    nano .env  # or use your preferred editor
    ```
 
-5. **Initialize Database:**
-   ```bash
-   python scripts/init_encodings.py
-   ```
+ 5. **Initialize Database & Encodings:**
+    ```bash
+    # Create database tables and default admin user
+    python scripts/db_setup.py
+    
+    # Initialize face encodings
+    python scripts/init_encodings.py
+    ```
+
+ 6. **Secure Admin Password (Recommended):**
+    Before exposing the project to the public web, change the default admin credentials (`admin`/`admin123`):
+    ```bash
+    python scripts/change_admin_password.py
+    ```
 
 ## 🔧 Configuration
 
@@ -132,6 +142,22 @@ python src/training/train_cpu_optimized.py
 2. Open your browser and navigate to `http://localhost:5000`
 
 3. Configure cameras and detection settings through the web interface
+
+### 🌐 Public Sharing (for Resumes & Sharing)
+
+To showcase your running application with a permanent public link on your resume or portfolio, use Ngrok's free static domain feature:
+
+1. **Create an account** on [ngrok.com](https://ngrok.com/).
+2. **Reserve a free static domain** in the Ngrok dashboard under **Cloud Edge > Domains** (e.g., `yourproject.ngrok-free.app`).
+3. **Configure your authorization token** in your terminal:
+   ```bash
+   ngrok config add-authtoken YOUR_AUTHTOKEN_HERE
+   ```
+4. **Expose the Flask server**:
+   ```bash
+   ngrok http 5000 --url=YOUR_STATIC_DOMAIN_HERE
+   ```
+Now your project is live at that link! If you turn your computer or Flask app off, the link will show a clean "Tunnel Offline" screen until you run the ngrok command again.
 
 ## 📁 Project Structure
 

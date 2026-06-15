@@ -160,7 +160,7 @@ def load_encodings():
 # Initial load
 load_encodings()
 
-def face_recognition_process(shm_name, shape, output_queue, cam_id):
+def face_recognition_process(shm_name, shape, output_queue, cam_id, lock):
     shared_mem = shared_memory.SharedMemory(name=shm_name)
     frame_buffer = np.ndarray(shape, dtype=np.uint8, buffer=shared_mem.buf)
 
@@ -169,7 +169,8 @@ def face_recognition_process(shm_name, shape, output_queue, cam_id):
 
     try:
         while True:
-            frame = frame_buffer.copy()
+            with lock:
+                frame = frame_buffer.copy()
             if frame is None or frame.size == 0:
                 continue
 

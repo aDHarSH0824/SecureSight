@@ -4,13 +4,14 @@ from multiprocessing import shared_memory
 import os
 import time
 
-def motion_detection_process(shm_name, shape, motion_queue, cam_id,varThreshold):
+def motion_detection_process(shm_name, shape, motion_queue, cam_id, varThreshold, lock):
     shared_mem = shared_memory.SharedMemory(name=shm_name)
     frame_buffer = np.ndarray(shape, dtype=np.uint8, buffer=shared_mem.buf)
     bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=50, varThreshold=varThreshold)
     
     while True:
-        frame = frame_buffer.copy()
+        with lock:
+            frame = frame_buffer.copy()
 
         # ✅ Ensure the frame is valid before processing
         if frame is None or frame.size == 0:

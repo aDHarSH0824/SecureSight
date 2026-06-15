@@ -39,7 +39,7 @@ import os
 # Global variable to track system state
 system_process = None
 system_running = False
-PID_FILE = "../../config/system_pid.json"
+PID_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "config", "system_pid.json"))
 
 load_dotenv()  # Load variables from .env
 
@@ -326,7 +326,8 @@ def start_system():
             return False, "System is already running"
         
         # Start new process
-        system_process = subprocess.Popen(["python", "main.py"])
+        import sys
+        system_process = subprocess.Popen([sys.executable, "main.py"])
         save_system_pid(system_process.pid)
         system_running = True
         
@@ -425,11 +426,19 @@ def apply_augmentations(image):
     
     return augmented_images
 
-def update_encodings(dataset_dirs=["../../data/datasets/dataset", "uploads"], encodings_file="../../config/encodings.pickle"):
+def update_encodings(dataset_dirs=None, encodings_file=None):
     """
     Processes all images in the dataset folders, applies augmentation,
     computes face encodings, and saves them in encodings_file.
     """
+    if dataset_dirs is None:
+        dataset_dirs = [
+            os.path.abspath(os.path.join(app.root_path, "..", "..", "data", "datasets", "dataset")),
+            os.path.abspath(os.path.join(app.root_path, "..", "..", "uploads"))
+        ]
+    if encodings_file is None:
+        encodings_file = os.path.abspath(os.path.join(app.root_path, "..", "..", "config", "encodings.pickle"))
+        
     image_paths = []
     
     # Process multiple directories

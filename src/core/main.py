@@ -11,6 +11,7 @@ from ..detection.motion_detection import motion_detection_process
 from ..detection.object_detection import object_detection_process
 from ..detection.face_recognition_module import face_recognition_process
 from .alert_module import alert_process
+from ..detection.optimized_weapon_detection import weapon_detection_process
 from flask import current_app
 from ..web.app import db, CameraSetting  # Replace 'your_app' with your actual app module name
 from ..web.app import app  # or whatever your Flask file is named
@@ -73,10 +74,12 @@ def main():
         object_queue = mp.Queue()
         face_queue = mp.Queue()
         motion_queue = mp.Queue()
+        weapon_queue = mp.Queue()
 
         for i, cam_config in enumerate(camera_settings):
             shm_name = f"video_frame_shm_{i}"
             detections = cam_config.get("detections", [])
+            lock = mp.Lock()
 
             shm = create_shared_memory(shm_name, int(np.prod(FRAME_SHAPE)))
             shared_mem_list.append(shm)
@@ -87,17 +90,19 @@ def main():
                 print(f"[ERROR] Invalid camera source in config: {cam_config.get('source')}")
                 continue
 
-            processes.append(mp.Process(target=video_capture_process, args=(shm_name, FRAME_SHAPE, source, i)))
+            processes.append(mp.Process(target=video_capture_process, args=(shm_name, FRAME_SHAPE, source, i, lock)))
 
             if "motion" in detections:
-                processes.append(mp.Process(target=motion_detection_process, args=(shm_name, FRAME_SHAPE, motion_queue, i,cam_config.get('motionThreshold'))))
+                processes.append(mp.Process(target=motion_detection_process, args=(shm_name, FRAME_SHAPE, motion_queue, i, cam_config.get('motionThreshold'), lock)))
             if "object" in detections:
-                processes.append(mp.Process(target=object_detection_process, args=(shm_name, FRAME_SHAPE, object_queue, i,cam_config.get('objectThreshold'))))
+                processes.append(mp.Process(target=object_detection_process, args=(shm_name, FRAME_SHAPE, object_queue, i, cam_config.get('objectThreshold'), lock)))
             if "face" in detections:
-                processes.append(mp.Process(target=face_recognition_process, args=(shm_name, FRAME_SHAPE, face_queue, i)))
+                processes.append(mp.Process(target=face_recognition_process, args=(shm_name, FRAME_SHAPE, face_queue, i, lock)))
+            if "weapon" in detections:
+                processes.append(mp.Process(target=weapon_detection_process, args=(shm_name, FRAME_SHAPE, weapon_queue, i, lock)))
 
         # Add alert process once, not inside loop
-        processes.append(mp.Process(target=alert_process, args=(object_queue, face_queue, motion_queue)))
+        processes.append(mp.Process(target=alert_process, args=(object_queue, face_queue, motion_queue, weapon_queue)))
 
         try:
             for p in processes:

@@ -113,7 +113,7 @@ import numpy as np
 import time
 import os
 
-def object_detection_process(shm_name, shape, output_queue, cam_id,objectThreshold):
+def object_detection_process(shm_name, shape, output_queue, cam_id, objectThreshold, lock):
     """
     Continuously reads frames from shared memory, runs YOLO object detection,
     and outputs detections via the output_queue. Also draws bounding boxes and
@@ -122,13 +122,19 @@ def object_detection_process(shm_name, shape, output_queue, cam_id,objectThresho
     shm = shared_memory.SharedMemory(name=shm_name)
     frame_buffer = np.ndarray(shape, dtype=np.uint8, buffer=shm.buf)
 
-    model = YOLO('../../data/models/best.pt')
-    #model = YOLO("yolo11m.pt")
+    # Load model with fallback
+    model_path = os.getenv("YOLO_MODEL_PATH", "../../data/models/best.pt")
+    try:
+        model = YOLO(model_path)
+    except Exception as e:
+        print(f"[WARNING] Camera {cam_id}: Failed to load YOLO model from '{model_path}' ({e}). Falling back to 'yolov8n.pt'...")
+        model = YOLO("yolov8n.pt")
 
     while True:
         time.sleep(0.01)
 
-        frame = np.copy(frame_buffer)
+        with lock:
+            frame = np.copy(frame_buffer)
 
         if frame is None or frame.shape != shape or np.all(frame == 0):
             print(f"[ERROR] Camera {cam_id}: Invalid or empty frame. Saving for inspection...")

@@ -390,7 +390,7 @@
                         <h4 class="text-lg font-semibold text-gray-300 mb-3">Detection Settings</h4>
                         
                         <!-- Detection Types -->
-                        <div class="grid grid-cols-3 gap-4 mb-4">
+                        <div class="grid grid-cols-4 gap-4 mb-4">
                             <label class="flex items-center space-x-3 cursor-pointer">
                                 <input type="checkbox" class="checkbox-custom" data-index="${index}" data-field="motion" ${cam.detections.includes("motion") ? "checked" : ""}>
                                 <span class="text-gray-300">Motion Detection</span>
@@ -402,6 +402,10 @@
                             <label class="flex items-center space-x-3 cursor-pointer">
                                 <input type="checkbox" class="checkbox-custom" data-index="${index}" data-field="face" ${cam.detections.includes("face") ? "checked" : ""}>
                                 <span class="text-gray-300">Face Detection</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" class="checkbox-custom" data-index="${index}" data-field="weapon" ${cam.detections.includes("weapon") ? "checked" : ""}>
+                                <span class="text-gray-300">Weapon Detection</span>
                             </label>
                         </div>
                         
@@ -457,7 +461,7 @@
       } else if (field === 'motionThreshold') {
         cameras[index].motionThreshold = parseInt(e.target.value);
         document.querySelector(`[data-index="${index}"][data-display="motion-threshold"]`).textContent = e.target.value;
-      } else if (['motion', 'object', 'face'].includes(field)) {
+      } else if (['motion', 'object', 'face', 'weapon'].includes(field)) {
         if (e.target.checked) {
           if (!cameras[index].detections.includes(field)) {
             cameras[index].detections.push(field);

@@ -3,7 +3,12 @@ Flask==3.1.0
 flask-cors==5.0.1
 Flask-SocketIO==5.5.1
 Flask-SQLAlchemy==3.1.1
+flask-login==0.6.3
+flask-migrate==4.1.0
+flask-mail==0.10.0
 gunicorn==23.0.0
+filetype==1.2.0
+setuptools<70
 
 # Computer Vision and AI
 opencv-python==4.11.0.86

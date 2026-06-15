@@ -202,9 +202,9 @@ from collections import defaultdict
 import time
 from collections import defaultdict
 from queue import Empty
-from ..web.app import app  # or whatever your Flask file is named
+from ..web.app import app
 
-def alert_process(object_queue, face_queue, motion_queue):
+def alert_process(object_queue, face_queue, motion_queue, weapon_queue):
     with app.app_context():
         camera_settings = load_camera_settings()
         print(camera_settings)
@@ -216,7 +216,7 @@ def alert_process(object_queue, face_queue, motion_queue):
         def log_to_file(alert_type, cam_id, message, severity, image_path):
             # Ensure the log directory exists
             os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
             log_line = f"[{timestamp}] {alert_type.upper()} ALERT - Camera: {cam_id} | Severity: {severity} | Message: {message} | Image: {image_path}\n"
             with open(log_file_path, "a", encoding="utf-8") as f:
                 f.write(log_line)
@@ -300,7 +300,31 @@ def alert_process(object_queue, face_queue, motion_queue):
             except Empty:
                 pass
 
-
+            # 🔥 Weapon Detection Alerts
+            try:
+                alert = weapon_queue.get_nowait()
+                cam_id = alert.get("cam_id")
+                if isinstance(cam_id, int) and 0 <= cam_id < len(camera_settings):
+                    if "weapon" in camera_settings[cam_id].get("detections", []):
+                        label = alert.get("detections")[0]["label"]
+                        key = ("weapon", cam_id)
+                        if now - last_alert_times[key] >= alert_interval:
+                            image_path = alert.get("image_path")
+                            message = f"WEAPON DETECTED: {label}"
+                            severity = "Critical"
+                            log_to_file("weapon", cam_id, message, severity, image_path)
+                            store_alert(f"Camera {cam_id}", "Weapon Detection", message, severity)
+                            send_email_notification("CRITICAL: Weapon Detected", message, image_path)
+                            send_local_notification("CRITICAL: Weapon Detected", message)
+                            last_alert_times[key] = now
+                            
+                            while True:
+                                try:
+                                    weapon_queue.get_nowait()
+                                except Empty:
+                                    break
+            except Empty:
+                pass
 
             time.sleep(0.05)
 
