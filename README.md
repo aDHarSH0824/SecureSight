@@ -1,3 +1,12 @@
+---
+title: SecureSight
+emoji: 🔐
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 5000
+---
+
 # 🔐 SecureSight
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
@@ -148,16 +157,32 @@ python src/training/train_cpu_optimized.py
 To showcase your running application with a permanent public link on your resume or portfolio, use Ngrok's free static domain feature:
 
 1. **Create an account** on [ngrok.com](https://ngrok.com/).
-2. **Reserve a free static domain** in the Ngrok dashboard under **Cloud Edge > Domains** (e.g., `yourproject.ngrok-free.app`).
+2. **Reserve a free static domain** in the Ngrok dashboard under **Cloud Edge > Domains** (e.g., `yourproject.ngrok-free.dev` or `yourproject.ngrok-free.app`).
 3. **Configure your authorization token** in your terminal:
    ```bash
    ngrok config add-authtoken YOUR_AUTHTOKEN_HERE
    ```
 4. **Expose the Flask server**:
    ```bash
-   ngrok http 5000 --url=YOUR_STATIC_DOMAIN_HERE
+   ngrok http --url=https://YOUR_STATIC_DOMAIN_HERE 5000
    ```
 Now your project is live at that link! If you turn your computer or Flask app off, the link will show a clean "Tunnel Offline" screen until you run the ngrok command again.
+
+### 🚀 24/7 Free Cloud Deployment (Hugging Face Spaces)
+
+To run the application 24/7 in the cloud for free with **16GB of RAM** (more than enough to run PyTorch & YOLOv8 models without crashing), you can deploy it as a Docker space on Hugging Face:
+
+1. **Create a Free Account** on [huggingface.co](https://huggingface.co/).
+2. **Create a New Space**: 
+   * Go to [huggingface.co/new-space](https://huggingface.co/new-space).
+   * Select **Docker** as the SDK.
+   * Choose the **Blank** template.
+   * Choose the free **CPU Basic** hardware (2 vCPU, 16GB RAM).
+3. **Deploy Your Code**:
+   * Push your git repository to the Hugging Face Space remote repository, or upload the files (`Dockerfile`, `requirements.txt`, `src/`, `config/`, `data/`, etc.) into the **Files** tab of your Space.
+   * Hugging Face will read the metadata at the top of this `README.md` and build your container on port `5000` automatically.
+4. **Your Live Link**:
+   * Once built, your app will be permanently live at: `https://huggingface.co/spaces/YOUR_USERNAME/YOUR_SPACE_NAME`.
 
 ## 📁 Project Structure
 
