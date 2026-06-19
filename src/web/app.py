@@ -44,12 +44,13 @@ PID_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "
 load_dotenv()  # Load variables from .env
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY")
+app.secret_key = os.getenv("SECRET_KEY", "securesight-super-secret-key")
 
-# PostgreSQL configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("SQLALCHEMY_DATABASE_URI")
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS")
-app.config['UPLOAD_FOLDER'] = os.getenv("UPLOAD_FOLDER")
+# PostgreSQL configuration (defaulting to SQLite if no URI is provided in environment)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("SQLALCHEMY_DATABASE_URI", "sqlite:///security_monitoring.db")
+track_mods = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS", "False")
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = track_mods.lower() == 'true' if isinstance(track_mods, str) else bool(track_mods)
+app.config['UPLOAD_FOLDER'] = os.getenv("UPLOAD_FOLDER", "uploads")
 
 
 
