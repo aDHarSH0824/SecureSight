@@ -173,7 +173,12 @@ class CameraSetting(db.Model):
 # Ensure database and default tables/records exist on startup
 try:
     with app.app_context():
-        db.create_all()
+        # Create database tables (handling multi-worker concurrent creation)
+        try:
+            db.create_all()
+        except Exception as e:
+            db.session.rollback()
+            print(f"ℹ️ Database tables already created or race condition: {e}")
         
         # Create default admin if not exists (handling multi-worker race conditions)
         try:
@@ -211,6 +216,10 @@ try:
             db.session.rollback()
             print(f"ℹ️ Camera setting already exists or database race condition: {e}")
 except Exception as e:
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
     print(f"⚠️ Error initializing database on startup: {e}")
 
 # ================================================================
