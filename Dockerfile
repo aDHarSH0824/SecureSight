@@ -38,6 +38,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy project files and change ownership to user
 COPY --chown=user:user . $HOME/app
 
+# Ensure the non-root user owns the app directory and all its files
+RUN chown -R user:user $HOME/app
+
 # Switch to the non-root user
 USER user
 
