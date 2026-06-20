@@ -48,4 +48,4 @@ USER user
 EXPOSE 7860
 
 # Start Flask web interface via Gunicorn in production mode
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:7860", "src.web.app:app"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:7860", "--access-logfile", "-", "src.web.app:app"]
