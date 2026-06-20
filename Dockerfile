@@ -44,8 +44,9 @@ RUN chown -R user:user $HOME/app
 # Switch to the non-root user
 USER user
 
-# Expose Flask web application port
+# Expose Flask web application ports
 EXPOSE 7860
+EXPOSE 5000
 
-# Start Flask web interface via Gunicorn in production mode
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:7860", "--access-logfile", "-", "src.web.app:app"]
+# Start Flask web interface via Gunicorn in production mode on both ports
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:7860", "-b", "0.0.0.0:5000", "--access-logfile", "-", "src.web.app:app"]
