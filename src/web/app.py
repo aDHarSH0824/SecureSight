@@ -174,33 +174,42 @@ class CameraSetting(db.Model):
 try:
     with app.app_context():
         db.create_all()
-        # Create default admin if not exists
-        admin = User.query.filter_by(username='admin').first()
-        if not admin:
-            admin = User(
-                username='admin',
-                role='admin',
-                email='admin@example.com',
-                first_name='System',
-                last_name='Admin',
-                is_active=True
-            )
-            admin.set_password('admin123')
-            db.session.add(admin)
-            db.session.commit()
-            print("👤 Created default admin user (username: admin, password: admin123)")
         
-        # Create default camera setting if not exists
-        if not CameraSetting.query.first():
-            default_cam = CameraSetting(
-                source="0",
-                detections=["motion", "object", "face"],
-                object_threshold=0.5,
-                motion_threshold=30
-            )
-            db.session.add(default_cam)
-            db.session.commit()
-            print("📹 Added default Camera 0 setting to database")
+        # Create default admin if not exists (handling multi-worker race conditions)
+        try:
+            admin = User.query.filter_by(username='admin').first()
+            if not admin:
+                admin = User(
+                    username='admin',
+                    role='admin',
+                    email='admin@example.com',
+                    first_name='System',
+                    last_name='Admin',
+                    is_active=True
+                )
+                admin.set_password('admin123')
+                db.session.add(admin)
+                db.session.commit()
+                print("👤 Created default admin user (username: admin, password: admin123)")
+        except Exception as e:
+            db.session.rollback()
+            print(f"ℹ️ Admin user already exists or database race condition: {e}")
+        
+        # Create default camera setting if not exists (handling multi-worker race conditions)
+        try:
+            if not CameraSetting.query.first():
+                default_cam = CameraSetting(
+                    source="0",
+                    detections=["motion", "object", "face"],
+                    object_threshold=0.5,
+                    motion_threshold=30
+                )
+                db.session.add(default_cam)
+                db.session.commit()
+                print("📹 Added default Camera 0 setting to database")
+        except Exception as e:
+            db.session.rollback()
+            print(f"ℹ️ Camera setting already exists or database race condition: {e}")
 except Exception as e:
     print(f"⚠️ Error initializing database on startup: {e}")
 
