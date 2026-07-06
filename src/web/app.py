@@ -572,17 +572,53 @@ def contact():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # Fail-safe: Ensure admin user exists in database on login load (helps with race conditions/fresh deployments)
+    try:
+        admin = User.query.filter_by(username='admin').first()
+        if not admin:
+            admin = User(
+                username='admin',
+                role='admin',
+                email='admin@example.com',
+                first_name='System',
+                last_name='Admin',
+                is_active=True
+            )
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
+            print("👤 [FAIL-SAFE] Created default admin user on login load")
+    except Exception as e:
+        db.session.rollback()
+        print(f"⚠️ [FAIL-SAFE] Database check/seeding failed on login load: {e}")
+
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        
-        user = User.query.filter_by(username=username).first()
-        
-        if user and user.check_password(password) and user.is_active:
-            login_user(user)
-            return redirect(url_for('dashboard'))
-        else:
-            flash("Invalid username or password")
+        try:
+            username = request.form['username'].strip()
+            password = request.form['password'].strip()
+            
+            print(f"[LOGIN ATTEMPT] Username: {username}")
+            user = User.query.filter_by(username=username).first()
+            
+            if user:
+                print(f"[LOGIN DEBUG] User found: {user.username}, Active: {user.is_active}")
+                is_correct_password = user.check_password(password)
+                print(f"[LOGIN DEBUG] Password matches: {is_correct_password}")
+                if is_correct_password and user.is_active:
+                    login_user(user)
+                    print(f"[LOGIN SUCCESS] User '{username}' logged in successfully")
+                    return redirect(url_for('dashboard'))
+                else:
+                    flash("Invalid username or password")
+            else:
+                print(f"[LOGIN FAILED] User '{username}' not found in database")
+                flash("Invalid username or password")
+        except Exception as e:
+            import traceback
+            print(f"[LOGIN ERROR] Exception during login: {e}")
+            traceback.print_exc()
+            db.session.rollback()
+            flash(f"Login error: {str(e)}")
     return render_template('login.html')
 
 @app.route('/logout')
@@ -1198,53 +1234,60 @@ def register():
         return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
-        # Get form data and strip whitespaces
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '').strip()
-        confirm_password = request.form.get('confirm_password', '').strip()
-        email = request.form.get('email', '').strip()
-        first_name = request.form.get('firstname', '').strip()
-        last_name = request.form.get('lastname', '').strip()
-        contact = request.form.get('contact', '').strip()
-
-        # Validation
-        if not username or not password or not confirm_password or not email:
-            flash('Please fill all required fields.', 'danger')
-            return redirect(url_for('register'))
-
-        if password != confirm_password:
-            flash('Passwords do not match.', 'danger')
-            return redirect(url_for('register'))
-
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists.', 'danger')
-            return redirect(url_for('register'))
-
-        if User.query.filter_by(email=email).first():
-            flash('Email already registered.', 'danger')
-            return redirect(url_for('register'))
-
-        # Create and save user
-        new_user = User(
-            username=username,
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-            contact=contact,
-            role='moderator',  # Set default role
-            created_at=datetime.utcnow(),
-            is_active=True
-        )
-        new_user.set_password(password)
-
         try:
+            # Get form data and strip whitespaces
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '').strip()
+            confirm_password = request.form.get('confirm_password', '').strip()
+            email = request.form.get('email', '').strip()
+            first_name = request.form.get('firstname', '').strip()
+            last_name = request.form.get('lastname', '').strip()
+            contact = request.form.get('contact', '').strip()
+
+            # Validation
+            if not username or not password or not confirm_password or not email:
+                flash('Please fill all required fields.', 'danger')
+                return redirect(url_for('register'))
+
+            if password != confirm_password:
+                flash('Passwords do not match.', 'danger')
+                return redirect(url_for('register'))
+
+            user_exists = User.query.filter_by(username=username).first()
+            if user_exists:
+                flash('Username already exists.', 'danger')
+                return redirect(url_for('register'))
+
+            email_exists = User.query.filter_by(email=email).first()
+            if email_exists:
+                flash('Email already registered.', 'danger')
+                return redirect(url_for('register'))
+
+            # Create and save user
+            new_user = User(
+                username=username,
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                contact=contact,
+                role='moderator',  # Set default role
+                created_at=datetime.utcnow(),
+                is_active=True
+            )
+            new_user.set_password(password)
+
             db.session.add(new_user)
             db.session.commit()
+            print(f"[REGISTER SUCCESS] User '{username}' registered successfully")
             flash('Registration successful! Please login.', 'success')
             return redirect(url_for('login'))
         except Exception as e:
+            import traceback
+            print(f"[REGISTER ERROR] Exception during registration: {e}")
+            traceback.print_exc()
             db.session.rollback()
             flash(f'Registration failed: {str(e)}', 'danger')
+            return redirect(url_for('register'))
 
     return render_template('signup.html')
 

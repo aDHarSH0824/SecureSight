@@ -44,6 +44,9 @@ RUN chown -R user:user $HOME/app
 # Switch to the non-root user
 USER user
 
+# Pre-initialize the database and folder structures at build time to prevent Gunicorn process race conditions
+RUN python scripts/db_setup.py
+
 # Expose Flask web application ports
 EXPOSE 7860
 EXPOSE 5000
