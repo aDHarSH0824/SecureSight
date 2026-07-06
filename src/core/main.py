@@ -84,11 +84,14 @@ def main():
             shm = create_shared_memory(shm_name, int(np.prod(FRAME_SHAPE)))
             shared_mem_list.append(shm)
 
-            try:
-                source = int(cam_config["source"])  # directly use index
-            except (KeyError, ValueError):
-                print(f"[ERROR] Invalid camera source in config: {cam_config.get('source')}")
+            source = cam_config.get("source")
+            if source is None:
+                print(f"[ERROR] Camera source config missing for index {i}")
                 continue
+            try:
+                source = int(source)
+            except ValueError:
+                pass
 
             processes.append(mp.Process(target=video_capture_process, args=(shm_name, FRAME_SHAPE, source, i, lock)))
 

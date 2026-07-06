@@ -281,14 +281,13 @@ def alert_process(object_queue, face_queue, motion_queue, weapon_queue):
                     if "object" in camera_settings[cam_id].get("detections", []):
                         label = alert.get("detections")[0]["label"]
                         key = ("object", cam_id)
-                        print(alert)
                         if now - last_alert_times[key] >= alert_interval:
-                            # image_path = alert.get("image") or capture_frame(cam_id)
+                            image_path = alert.get("image_path") or alert.get("image") or capture_frame(cam_id)
                             message = f"Object detected: {label}"
                             severity = alert.get("severity", "high")
-                            log_to_file("object", cam_id, message, severity, "image_path")
+                            log_to_file("object", cam_id, message, severity, image_path)
                             store_alert(f"Camera {cam_id}", "Object Detection", message, severity)
-                            send_email_notification("Object Detected", message, "image_path")
+                            send_email_notification("Object Detected", message, image_path)
                             send_local_notification("Object Detected", message)
                             last_alert_times[key] = now
                                                     # ✅ Flush the rest of the queue

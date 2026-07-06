@@ -9,9 +9,9 @@ def video_capture_process(shm_name, shape, camera_source, cam_id, lock):
     else:
         try:
             cam_index = int(camera_source)
+            cap = cv2.VideoCapture(cam_index)
         except ValueError:
-            cam_index = 0
-        cap = cv2.VideoCapture(cam_index)
+            cap = cv2.VideoCapture(camera_source)
     
     shared_mem = shared_memory.SharedMemory(name=shm_name)
     frame_buffer = np.ndarray(shape, dtype=np.uint8, buffer=shared_mem.buf)

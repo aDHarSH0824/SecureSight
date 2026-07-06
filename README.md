@@ -12,9 +12,9 @@ sdk: docker
 [![Flask](https://img.shields.io/badge/Flask-3.1.0-green.svg)](https://flask.palletsprojects.com/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-4.11.0-red.svg)](https://opencv.org/)
 [![YOLO](https://img.shields.io/badge/YOLO-v8-orange.svg)](https://ultralytics.com/)
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://huggingface.co/spaces/harsh12332/Secure_Sight)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://harsh12332-secure-sight.hf.space)
 
-🌐 **Live Demo:** [huggingface.co/spaces/harsh12332/Secure_Sight](https://huggingface.co/spaces/harsh12332/Secure_Sight)
+🌐 **Live Demo (Direct Link):** [harsh12332-secure-sight.hf.space](https://harsh12332-secure-sight.hf.space)
 
 A comprehensive AI-powered security monitoring system featuring real-time face recognition, motion detection, and object/weapon detection with 86.7% accuracy. Built with a modular architecture for scalability and easy customization.
 
@@ -184,7 +184,7 @@ To run the application 24/7 in the cloud for free with **16GB of RAM** (more tha
    * Push your git repository to the Hugging Face Space remote repository, or upload the files (`Dockerfile`, `requirements.txt`, `src/`, `config/`, `data/`, etc.) into the **Files** tab of your Space.
    * Hugging Face will read the metadata at the top of this `README.md` and build your container on port `5000` automatically.
 4. **Your Live Link**:
-    * Once built, your app will be permanently live at: [huggingface.co/spaces/harsh12332/Secure_Sight](https://huggingface.co/spaces/harsh12332/Secure_Sight).
+    * Once built, your app will be permanently live at: [https://harsh12332-secure-sight.hf.space](https://harsh12332-secure-sight.hf.space).
 
 ## 📁 Project Structure
 

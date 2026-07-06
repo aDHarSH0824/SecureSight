@@ -20,10 +20,9 @@ class TestSecureSightDetection(unittest.TestCase):
         mock_bg_subtractor.return_value = mock_sub
         self.assertIsNotNone(mock_bg_subtractor)
         
-    @patch('ultralytics.YOLO')
+    @patch('src.detection.optimized_weapon_detection.YOLO')
     def test_weapon_detector_initialization(self, mock_yolo):
-        # Verify ImprovedWeaponDetector fallback logic
-        mock_yolo.side_effect = Exception("Model not found")
+        mock_yolo.side_effect = [Exception("Model not found"), MagicMock()]
         
         detector = ImprovedWeaponDetector(model_path="invalid_path.pt")
         
